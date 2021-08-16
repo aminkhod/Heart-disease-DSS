@@ -17,7 +17,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 
 import matplotlib.pyplot as plt
-get_ipython().run_line_magic('matplotlib', 'inline')
+# %matplotlib inline
 
 
 # In[2]:
@@ -37,7 +37,7 @@ def Heart_Disease_Data():
     print('Importing...')
     print('Please Wait :)')
     missing_values = ["n/a", "na", "--", "nan", ".", "-", "- ", "_"]
-    dfSM = pd.read_excel(import_file_path, na_values=missing_values)
+    dfSM = pd.read_excel(import_file_path, na_values=missing_values, engine='openpyxl')
     print('Decision Support System(DSS) has been uploaded')
 
 def To_predictData():
@@ -47,7 +47,7 @@ def To_predictData():
     print('Importing...')
     print('Please Wait :)')
     missing_values = ["n/a", "na", "--", "nan", ".", "-", "- ", "_"]
-    preData = pd.read_excel(import_file_path, na_values=missing_values)
+    preData = pd.read_excel(import_file_path, na_values=missing_values, engine='openpyxl')
     print('Data to predict has been uploaded')
     print('Files have been Imported\nClick Run and close the window!')
 
@@ -93,23 +93,7 @@ root.mainloop()
 # del Get_HistFraud
 
 
-# In[103]:
-
-
-XSM = dfSM.drop('Target', axis=1)
-ySM = dfSM['Target']
-
-SS = StandardScaler()
-SS.fit(XSM)
-X_normal_SM = SS.transform(XSM)
-X_normal_SM = pd.DataFrame(X_normal_SM)
-dfSM = pd.concat([X_normal_SM, ySM], axis=1)
-col = list(set(XSM.columns))
-col.append('Target')
-dfSM.columns = col
-
-
-# In[104]:
+# In[4]:
 
 
 y = dfSM.iloc[:,-1].values
@@ -119,15 +103,45 @@ pso = np.array([1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 X_selected_features = X[:,pso==1]
 
 
-# In[105]:
+# In[5]:
+
+
+XSM = dfSM.drop('Target', axis=1)
+XSM = XSM.drop(XSM.columns[list(pso).index(0)],axis=1)
+ySM = dfSM['Target']
+
+SS = StandardScaler()
+SS.fit(X_selected_features)
+X_normal_SM = SS.transform(X_selected_features)
+# X_normal_SM = X_selected_features.copy()
+
+X_normal_SM = pd.DataFrame(X_normal_SM)
+dfSM = pd.concat([X_normal_SM, ySM], axis=1)
+
+
+# In[6]:
+
+
+col = list(set(XSM.columns))
+col.append('Target')
+dfSM.columns = col
+
+
+# In[7]:
+
+
+dfSM.shape
+
+
+# In[8]:
 
 
 CLF = XGBClassifier()
 # CLF = RandomForestClassifier()
-CLF.fit(X_selected_features, y)
+CLF.fit(X_normal_SM, y)
 
 
-# In[106]:
+# In[9]:
 
 
 try:
@@ -136,7 +150,7 @@ except:
     1+1
 
 
-# In[107]:
+# In[10]:
 
 
 preData = preData.rename(columns={
@@ -156,7 +170,7 @@ preData = preData.rename(columns={
                       'سابقه فشار خون':'History of high blood pressure'})
 
 
-# In[108]:
+# In[11]:
 
 
 preData['Sex'][preData['Sex']=='زن']=0
@@ -165,7 +179,7 @@ preData['Sex'][preData['Sex']=='مرد ']=1
 preData['Sex'] = preData['Sex'].astype('int64')
 
 
-# In[109]:
+# In[12]:
 
 
 def  approach2_impute_metric(messy_df, baseData, metric):
@@ -244,37 +258,56 @@ def  approach2_impute_metric(messy_df, baseData, metric):
     return clean_df,missing_list
 
 
-# In[110]:
+# In[13]:
 
 
-cleanDF, mislist = approach2_impute_metric(preData, XSM, "Random Forests")
+dfSM.head()
 
 
-# In[111]:
+# In[14]:
 
 
+try:
+    dfSM = dfSM.drop('Target', axis=1) 
+except:
+    1+1
+preData = preData[dfSM.columns]
+preData .head()
+
+
+# In[15]:
+
+
+dfSM
+
+
+# In[16]:
+
+
+cleanDF, mislist = approach2_impute_metric(preData, dfSM , "Random Forests")
 cleanDF.shape
 
 
-# In[116]:
+# In[17]:
 
 
-StandardizedData = SS.transform(cleanDF.iloc[:,pso==1])
+StandardizedData = SS.transform(cleanDF)
 y = CLF.predict(StandardizedData)
 
 # y = CLF.predict(cleanDF.values[:,pso==1])
 y
 
 
-# In[80]:
+# In[18]:
 
 
-cleanDF['predict'] = y
-cleanDF.to_excel('Result.xlsx', index=False)
+newDF = cleanDF.copy()
+newDF['predict'] = y
+newDF.to_excel('Result.xlsx', index=False)
 
 
-# In[ ]:
+# In[19]:
 
 
-
+# cleanDF = cleanDF.drop('predict', axis=1)
 
