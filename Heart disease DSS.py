@@ -93,55 +93,20 @@ root.mainloop()
 # del Get_HistFraud
 
 
-# In[4]:
+# In[5]:
 
 
 y = dfSM.iloc[:,-1].values
 X = dfSM.drop('Target',axis=1).values
 
 pso = np.array([1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
-X_selected_features = X[:,pso==1]
-
-
-# In[5]:
-
-
+# X_selected_features = X[:,pso==1]
 XSM = dfSM.drop('Target', axis=1)
 XSM = XSM.drop(XSM.columns[list(pso).index(0)],axis=1)
 ySM = dfSM['Target']
 
-SS = StandardScaler()
-SS.fit(X_selected_features)
-X_normal_SM = SS.transform(X_selected_features)
-# X_normal_SM = X_selected_features.copy()
-
-X_normal_SM = pd.DataFrame(X_normal_SM)
-dfSM = pd.concat([X_normal_SM, ySM], axis=1)
-
 
 # In[6]:
-
-
-col = list(set(XSM.columns))
-col.append('Target')
-dfSM.columns = col
-
-
-# In[7]:
-
-
-dfSM.shape
-
-
-# In[8]:
-
-
-CLF = XGBClassifier()
-# CLF = RandomForestClassifier()
-CLF.fit(X_normal_SM, y)
-
-
-# In[9]:
 
 
 try:
@@ -150,7 +115,7 @@ except:
     1+1
 
 
-# In[10]:
+# In[7]:
 
 
 preData = preData.rename(columns={
@@ -170,7 +135,7 @@ preData = preData.rename(columns={
                       'سابقه فشار خون':'History of high blood pressure'})
 
 
-# In[11]:
+# In[8]:
 
 
 preData['Sex'][preData['Sex']=='زن']=0
@@ -179,7 +144,7 @@ preData['Sex'][preData['Sex']=='مرد ']=1
 preData['Sex'] = preData['Sex'].astype('int64')
 
 
-# In[12]:
+# In[9]:
 
 
 def  approach2_impute_metric(messy_df, baseData, metric):
@@ -258,37 +223,46 @@ def  approach2_impute_metric(messy_df, baseData, metric):
     return clean_df,missing_list
 
 
-# In[13]:
+# In[10]:
 
 
-dfSM.head()
-
-
-# In[14]:
-
-
-try:
-    dfSM = dfSM.drop('Target', axis=1) 
-except:
-    1+1
-preData = preData[dfSM.columns]
+# try:
+#     dfSM = dfSM.drop('Target', axis=1) 
+# except:
+#     1+1
+preData = preData[XSM.columns]
 preData .head()
 
 
-# In[15]:
+# In[11]:
 
 
-dfSM
-
-
-# In[16]:
-
-
-cleanDF, mislist = approach2_impute_metric(preData, dfSM , "Random Forests")
+cleanDF, mislist = approach2_impute_metric(preData, XSM, "Random Forests")
 cleanDF.shape
 
 
-# In[17]:
+# In[12]:
+
+
+SS = StandardScaler()
+SS.fit(XSM)
+X_normal_SM = SS.transform(XSM)
+
+X_normal_SM = pd.DataFrame(X_normal_SM)
+dfSM = pd.concat([X_normal_SM, ySM], axis=1)
+
+col = list(set(XSM.columns))
+col.append('Target')
+dfSM.columns = col
+dfSM.shape
+
+#### Training Classifier 
+CLF = XGBClassifier()
+# CLF = RandomForestClassifier()
+CLF.fit(X_normal_SM, y)
+
+
+# In[14]:
 
 
 StandardizedData = SS.transform(cleanDF)
@@ -298,7 +272,7 @@ y = CLF.predict(StandardizedData)
 y
 
 
-# In[18]:
+# In[15]:
 
 
 newDF = cleanDF.copy()
@@ -306,7 +280,7 @@ newDF['predict'] = y
 newDF.to_excel('Result.xlsx', index=False)
 
 
-# In[19]:
+# In[ ]:
 
 
 # cleanDF = cleanDF.drop('predict', axis=1)
